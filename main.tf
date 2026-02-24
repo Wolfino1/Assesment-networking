@@ -69,7 +69,7 @@ resource "aws_subnet" "private" {
     local.common_tags,
     {
       Name = "${local.governance_prefix}-subnet-private-${each.key}"
-      Type = "Private"
+      Type = startswith(each.key, "app-") ? "App" : startswith(each.key, "data-") ? "Data" : "Private"
     }
   )
 }

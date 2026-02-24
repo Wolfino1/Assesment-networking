@@ -8,7 +8,9 @@ El módulo despliega una arquitectura de red robusta y segura que incluye:
 
 - 1 VPC con DNS habilitado
 - 2 subnets públicas (distribuidas en diferentes AZs)
-- 4 subnets privadas (2 para app, 2 para data - distribuidas en diferentes AZs)
+- 4 subnets privadas:
+  - 2 subnets tipo `App` (app-1a, app-1b) para servicios de aplicación (ECS, Lambda)
+  - 2 subnets tipo `Data` (data-1a, data-1b) para bases de datos (RDS, ElastiCache)
 - 1 Internet Gateway para conectividad pública
 - 2 NAT Gateways (uno por AZ) para alta disponibilidad
 - 2 Elastic IPs (una por cada NAT Gateway)
@@ -213,7 +215,7 @@ module "networking" {
 | vpc_arn | ARN de la VPC |
 | internet_gateway_id | ID del Internet Gateway |
 | public_subnet_ids | IDs de las subnets públicas |
-| private_subnet_ids | IDs de las subnets privadas |
+| private_subnet_ids | IDs de las subnets privadas (incluye app y data) |
 | nat_gateway_ids | IDs de los NAT Gateways |
 | elastic_ip_addresses | Direcciones IP elásticas |
 | public_route_table_id | ID de la tabla de rutas pública |
@@ -222,6 +224,8 @@ module "networking" {
 | interface_endpoint_ids | IDs de los VPC Endpoints Interface |
 | vpc_endpoints_security_group_id | ID del Security Group para VPC Endpoints |
 | networking_summary | Resumen de la infraestructura creada |
+
+**Nota:** Para filtrar subnets por tipo desde otros módulos, usa los tags `Type = "App"` o `Type = "Data"` junto con `Project = "assesment"`. Ver sección "Estrategia de Tags" en Decisiones de Diseño.
 
 ## Requisitos
 
@@ -240,6 +244,57 @@ module "networking" {
 | PC-IAC-020 | Seguridad (Hardenizado) | VPC Endpoints, Security Groups restrictivos |
 
 ## Decisiones de Diseño
+
+### Estrategia de Tags para Integración con Otros Módulos
+
+Las subnets están etiquetadas estratégicamente para facilitar la integración con otros módulos de Terraform (RDS, ECS, etc.):
+
+**Tags de Gobernanza (aplicados a todos los recursos):**
+```hcl
+Client      = "pragma"          # Identificador del cliente
+Project     = "assesment"       # Identificador del proyecto
+Environment = "dev"             # Ambiente (dev, qa, pdn)
+```
+
+**Tags de Tipo de Subnet:**
+
+| Subnet | Tag Type | Uso Recomendado |
+|--------|----------|-----------------|
+| `app-1a`, `app-1b` | `Type = "App"` | ECS Fargate, Lambda, servicios de aplicación |
+| `data-1a`, `data-1b` | `Type = "Data"` | RDS, ElastiCache, bases de datos |
+| Subnets públicas | `Type = "Public"` | Load Balancers, NAT Gateways |
+
+**Ejemplo de búsqueda de subnets desde otros módulos:**
+
+```hcl
+# Módulo de RDS - Buscar subnets de datos
+data "aws_subnets" "data" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.selected.id]
+  }
+
+  tags = {
+    Project = "assesment"
+    Type    = "Data"
+  }
+}
+
+# Módulo de ECS - Buscar subnets de aplicación
+data "aws_subnets" "app" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.selected.id]
+  }
+
+  tags = {
+    Project = "assesment"
+    Type    = "App"
+  }
+}
+```
+
+Esta estrategia permite que los módulos de RDS y ECS encuentren automáticamente las subnets correctas sin necesidad de hardcodear IDs.
 
 ### NAT Gateways por Availability Zone
 Se crea un NAT Gateway por cada AZ única definida en las subnets públicas, garantizando alta disponibilidad y evitando puntos únicos de falla.
