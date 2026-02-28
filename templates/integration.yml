@@ -1,0 +1,43 @@
+steps:
+  - task: TerraformInstaller@1
+    displayName: 'Install Terraform'
+    inputs:
+      terraformVersion: '1.9.8'
+
+  - task: AWSShellScript@1
+    displayName: 'Terraform Init (Lint)'
+    inputs:
+      awsCredentials: '$(AWS_SERVICE_CONNECTION)'
+      regionName: '$(AWS_REGION)'
+      scriptType: 'inline'
+      inlineScript: |
+        terraform init \
+          -backend=false \
+          -input=false
+
+  - task: AWSShellScript@1
+    displayName: 'Terraform Format Check'
+    inputs:
+      awsCredentials: '$(AWS_SERVICE_CONNECTION)'
+      regionName: '$(AWS_REGION)'
+      scriptType: 'inline'
+      inlineScript: |
+        echo "=== Checking Terraform formatting ==="
+        terraform fmt -check -recursive -diff
+        if [ $? -ne 0 ]; then
+          echo "##[error] Terraform files are not properly formatted. Run 'terraform fmt -recursive' locally."
+          exit 1
+        fi
+        echo "✅ Format check passed"
+
+  - task: AWSShellScript@1
+    displayName: 'Terraform Validate'
+    inputs:
+      awsCredentials: '$(AWS_SERVICE_CONNECTION)'
+      regionName: '$(AWS_REGION)'
+      scriptType: 'inline'
+      inlineScript: |
+        terraform init -backend=false -input=false
+        echo "=== Validating Terraform configuration ==="
+        terraform validate
+        echo "✅ Validate passed"

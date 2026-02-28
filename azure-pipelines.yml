@@ -1,0 +1,82 @@
+parameters:
+  - name: environmentName
+    type: string
+    default: 'dev'
+    values:
+      - dev
+      - qa
+      - pdn
+
+variables:
+  - group: networking-vars
+
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - '*.tf'
+      - '*.tfvars'
+
+pr:
+  branches:
+    include:
+      - main
+
+stages:
+  - stage: Prerequisites
+    displayName: '🔧 Prerequisites'
+    jobs:
+      - job: Prerequisites
+        displayName: 'Validate Tools & Checkout'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+          - template: templates/prerequisites.yml
+
+  - stage: Integration
+    dependsOn: Prerequisites
+    displayName: '🔍 CI - Lint & Format'
+    jobs:
+      - job: CI
+        displayName: 'Terraform Validate & Format'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+          - template: templates/integration.yml
+
+  - stage: Validation
+    displayName: '📋 Validation - Terraform Plan'
+    dependsOn: Integration
+    jobs:
+      - job: Planning
+        displayName: 'Terraform Plan'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - checkout: self
+          - template: templates/validation.yml
+
+  - stage: Deploy
+    displayName: '🚀 CD - Terraform Apply'
+    dependsOn: Validation
+    condition: |
+      and(
+        succeeded(),
+        eq(variables['Build.SourceBranch'], 'refs/heads/main')
+      )
+    jobs:
+      - deployment: Applying
+        displayName: 'Terraform Apply'
+        pool:
+          vmImage: 'ubuntu-latest'
+        environment: '${{ parameters.environmentName }}'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+                - template: templates/deploy.yml

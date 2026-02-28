@@ -1,0 +1,42 @@
+steps:
+  - task: TerraformInstaller@1
+    displayName: 'Install Terraform'
+    inputs:
+      terraformVersion: '1.9.8'
+
+  - task: AWSShellScript@1
+    displayName: 'Terraform Init with Backend'
+    inputs:
+      awsCredentials: '$(AWS_SERVICE_CONNECTION)'
+      regionName: '$(AWS_REGION)'
+      scriptType: 'inline'
+      inlineScript: |
+        terraform init \
+          -input=false \
+          -backend-config="bucket=$(TF_STATE_BUCKET)" \
+          -backend-config="key=$(TF_STATE_KEY)" \
+          -backend-config="region=$(AWS_REGION)" \
+          -backend-config="dynamodb_table=$(TF_STATE_DYNAMODB)" \
+          -backend-config="encrypt=true"
+
+  - task: AWSShellScript@1
+    displayName: 'Terraform Plan'
+    inputs:
+      awsCredentials: '$(AWS_SERVICE_CONNECTION)'
+      regionName: '$(AWS_REGION)'
+      scriptType: 'inline'
+      inlineScript: |
+        terraform plan \
+          -input=false \
+          -out=tfplan \
+          -var-file="terraform.tfvars"
+        
+        echo "=== Plan Summary ==="
+        terraform show -no-color tfplan | tail -20
+
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish Plan Artifact'
+    inputs:
+      targetPath: 'tfplan'
+      artifact: 'tfplan-$(Build.BuildId)'
+      publishLocation: 'pipeline'

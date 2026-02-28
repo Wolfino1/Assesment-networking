@@ -23,3 +23,14 @@ provider "aws" {
     tags = local.common_tags
   }
 }
+
+  backend "s3" {}
+}
+
+provider "aws" {
+  region = var.region
+
+  default_tags {
+    tags = local.common_tags
+  }
+}
