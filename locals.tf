@@ -38,7 +38,7 @@ locals {
   # ----------------------------------------------------------------------------
   # Obtener AZs únicas de las subnets públicas
   unique_azs = distinct([for k, v in var.public_subnets : v.availability_zone])
-  
+
   # Crear mapeo de NAT Gateways por AZ (uno por AZ única)
   nat_gateway_map = {
     for idx, az in local.unique_azs : "nat-${idx + 1}" => {
@@ -50,8 +50,8 @@ locals {
   # Crear mapeo de tablas de rutas privadas por AZ
   private_route_table_map = {
     for idx, az in local.unique_azs : az => {
-      name       = "${local.governance_prefix}-rtb-private-${replace(az, "${var.region}-", "")}"
-      nat_key    = "nat-${idx + 1}"
+      name    = "${local.governance_prefix}-rtb-private-${replace(az, "${var.region}-", "")}"
+      nat_key = "nat-${idx + 1}"
     }
   }
 
