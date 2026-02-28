@@ -1,5 +1,5 @@
 steps:
-  - task: TerraformInstaller@1
+  - task: ms-devlabs.custom-terraform-tasks.custom-terraform-installer-task.TerraformInstaller@1
     displayName: 'Install Terraform'
     inputs:
       terraformVersion: '1.9.8'
@@ -16,7 +16,6 @@ steps:
           -backend-config="bucket=$(TF_STATE_BUCKET)" \
           -backend-config="key=$(TF_STATE_KEY)" \
           -backend-config="region=$(AWS_REGION)" \
-          -backend-config="dynamodb_table=$(TF_STATE_DYNAMODB)" \
           -backend-config="encrypt=true"
 
   - task: AWSShellScript@1
