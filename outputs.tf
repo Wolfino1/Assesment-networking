@@ -169,15 +169,15 @@ output "vpc_endpoints_security_group_arn" {
 output "networking_summary" {
   description = "Resumen de la infraestructura de networking creada"
   value = {
-    vpc_id                      = aws_vpc.this.id
-    vpc_cidr                    = aws_vpc.this.cidr_block
-    public_subnets_count        = length(aws_subnet.public)
-    private_subnets_count       = length(aws_subnet.private)
-    nat_gateways_count          = length(aws_nat_gateway.this)
-    private_route_tables_count  = length(aws_route_table.private)
-    interface_endpoints_count   = length(aws_vpc_endpoint.interface)
-    region                      = var.region
-    environment                 = var.environment
-    availability_zones          = local.unique_azs
+    vpc_id                     = aws_vpc.this.id
+    vpc_cidr                   = aws_vpc.this.cidr_block
+    public_subnets_count       = length(aws_subnet.public)
+    private_subnets_count      = length(aws_subnet.private)
+    nat_gateways_count         = length(aws_nat_gateway.this)
+    private_route_tables_count = length(aws_route_table.private)
+    interface_endpoints_count  = length(aws_vpc_endpoint.interface)
+    region                     = var.region
+    environment                = var.environment
+    availability_zones         = local.unique_azs
   }
 }
