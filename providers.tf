@@ -7,6 +7,9 @@
 terraform {
   required_version = ">= 1.5.0"
 
+  # EL BACKEND VA AQUÍ ADENTRO (OBLIGATORIO)
+  backend "s3" {} 
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -17,18 +20,7 @@ terraform {
 
 # Provider principal de AWS
 provider "aws" {
-  region = var.region
-
-  default_tags {
-    tags = local.common_tags
-  }
-}
-
-  backend "s3" {}
-}
-
-provider "aws" {
-  region = var.region
+  region = var.aws_region 
 
   default_tags {
     tags = local.common_tags
