@@ -27,15 +27,18 @@ steps:
       inlineScript: |
         terraform plan \
           -input=false \
-          -out=tfplan \
+          -out=$(Build.SourcesDirectory)/tfplan \
           -var-file="terraform.tfvars"
         
         echo "=== Plan Summary ==="
-        terraform show -no-color tfplan | tail -20
+        terraform show -no-color $(Build.SourcesDirectory)/tfplan | tail -20
+        
+        echo "=== Verifying plan file exists ==="
+        ls -la $(Build.SourcesDirectory)/tfplan
 
   - task: PublishPipelineArtifact@1
     displayName: 'Publish Plan Artifact'
     inputs:
-      targetPath: 'tfplan'
+      targetPath: '$(Build.SourcesDirectory)/tfplan'
       artifact: 'tfplan-$(Build.BuildId)'
       publishLocation: 'pipeline'

@@ -8,7 +8,7 @@ steps:
     displayName: 'Download Plan Artifact'
     inputs:
       artifact: 'tfplan-$(Build.BuildId)'
-      path: '$(System.DefaultWorkingDirectory)'
+      path: '$(Build.SourcesDirectory)'
 
   - task: AWSShellScript@1
     displayName: 'Terraform Init with Backend'
@@ -31,10 +31,13 @@ steps:
       regionName: '$(AWS_REGION)'
       scriptType: 'inline'
       inlineScript: |
+        echo "=== Verifying plan file exists ==="
+        ls -la $(Build.SourcesDirectory)/tfplan
+        
         terraform apply \
           -input=false \
           -auto-approve \
-          tfplan
+          $(Build.SourcesDirectory)/tfplan
         
         echo "=== Outputs ==="
         terraform output
