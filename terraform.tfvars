@@ -73,7 +73,7 @@ interface_endpoints = [
 # TAGS ADICIONALES
 # ----------------------------------------------------------------------------
 additional_tags = {
-  Owner      = "Santiago.Guerrero"
+  owner      = "Santiago.Guerrero"
   CostCenter = "00000"
   Terraform  = "true"
   Purpose    = "Networking Infrastructure"
